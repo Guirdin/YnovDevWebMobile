@@ -43,6 +43,25 @@
         }
       });
     </script>
+
+<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+    <script>
+      var OneSignal = window.OneSignal || [];
+      var initConfig = {
+        appId: "30bffd7e-f45b-4a7b-9230-1e00764f9b3e",
+        notifyButton: {
+          enable: true,
+        },
+      };
+      OneSignal.push(function () {
+        OneSignal.SERVICE_WORKER_PARAM = { scope: "/push/onesignal/" };
+        OneSignal.SERVICE_WORKER_PATH = "push/onesignal/OneSignalSDKWorker.js";
+        OneSignal.SERVICE_WORKER_UPDATER_PATH =
+          "push/onesignal/OneSignalSDKUpdaterWorker.js";
+        OneSignal.init(initConfig);
+      });
+    </script>
+
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
     <meta

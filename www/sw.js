@@ -1,8 +1,32 @@
 /** VARS */
-const CACHE_NAME = "offline";
+const CACHE_NAME = "offline-v4";
 const OFFLINE_URL = "offline.html";
 
+const ORIGIN_URL = `${location.protocol}//${location.host}`;
+const CACHED_FILES = [
+  OFFLINE_URL,
+  "https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/css/bootstrap.min.css",
+  "https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/js/bootstrap.bundle.min.js",
+  `${ORIGIN_URL}/css/index.css`,
+  `${ORIGIN_URL}/js/index.js`,
+  `${ORIGIN_URL}/img/logo.png`,
+];
+
+
 /** FUNCTIONS */
+
+const deleteOldCaches = () =>
+  new Promise((resolve) => {
+    caches.keys().then((keys) => {
+      Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            caches.delete(key);
+          }
+        })
+      ).finally(resolve);
+    });
+  });
 
 /** Fetch */
 
@@ -42,6 +66,8 @@ const fetchSW = (event) => {
   // for an HTML page.
   if (event.request.mode === "navigate") {
     event.respondWith(respondWithFetchPromiseNavigate(event));
+  } else if (CACHED_FILES.includes(event.request.url)) {
+    event.respondWith(caches.match(event.request));
   }
 };
 
@@ -51,12 +77,9 @@ const fetchSW = (event) => {
 
 const waitUntilActivatePromise = () =>
   new Promise((resolve) => {
-    // Enable navigation preload if it's supported.
-    // See https://developers.google.com/web/updates/2017/02/navigation-preload
-    if ("navigationPreload" in self.registration) {
-      self.registration.navigationPreload.enable().finally(resolve);
-    }
-  });
+    deleteOldCaches().then(() => {
+      if ("navigationPreload" in self.registration) {
+        self.registration.navigationPreload.enable().finally(resolve);}});});
 
 const activate = (event) => {
   event.waitUntil(waitUntilActivatePromise());
@@ -70,9 +93,12 @@ const activate = (event) => {
 const waitUntilInstallationPromise = () =>
   new Promise((resolve) => {
     caches.open(CACHE_NAME).then((cache) => {
-      cache.add(new Request(OFFLINE_URL, { cache: "reload" })).then(resolve);
+      console.log(cache);
+      console.log(CACHED_FILES);
+      cache.addAll(CACHED_FILES).then(resolve);
     });
   });
+
 
 const installSW = (event) => {
   event.waitUntil(waitUntilInstallationPromise());
